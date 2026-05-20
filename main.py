@@ -91,7 +91,12 @@ def main():
     print("  它手持一把生锈的弯刀，向你龇牙咧嘴。")
     print()
     print("  可用行动（自由输入即可）：")
-    print("    攻击 / 防御 / 使用药水 / 逃跑")
+    print("    攻击 / 重击 / 连击 / 踢")
+    print("    防御 / 反击 / 闪避")
+    print("    蓄力 / 集中 / 战吼")
+    print("    药水 / 休息 / 祈祷")
+    print("    嘲讽 / 观察 / 偷窃 / 谈判")
+    print("    逃跑 / 投降")
     print("    输入 quit 退出")
 
     state = create_initial_state()
