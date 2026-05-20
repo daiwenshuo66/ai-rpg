@@ -1,5 +1,11 @@
 import os
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 API_KEY = os.environ.get("API_KEY", "")
 BASE_URL = os.environ.get("BASE_URL", "https://api.deepseek.com")
 
