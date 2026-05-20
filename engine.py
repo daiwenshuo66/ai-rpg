@@ -9,11 +9,15 @@ def process_action(action: dict, state: GameState) -> dict:
         "defend": _process_defend,
         "use_item": _process_use_item,
         "flee": _process_flee,
+        "rest": _process_rest,
+        "taunt": _process_taunt,
+        "examine": _process_examine,
+        "invalid": _process_invalid,
     }
     handler = handlers.get(action_type)
     if handler:
         return handler(action, state)
-    return {"action": "unknown", "success": False, "message": "无法理解的行动", "_trace": ["未知动作，跳过"]}
+    return _process_invalid(action, state)
 
 
 def _process_attack(action: dict, state: GameState) -> dict:
@@ -134,6 +138,82 @@ def _process_flee(action: dict, state: GameState) -> dict:
     return {"action": "flee", "success": False, "_trace": trace}
 
 
+def _process_rest(action: dict, state: GameState) -> dict:
+    trace = []
+    trace.append(f"{state.player.name} 选择休息")
+    heal = random.randint(5, 10)
+    trace.append(f"恢复量: random(5~10) = {heal}")
+    hp_before = state.player.hp
+    state.player.hp = min(state.player.max_hp, state.player.hp + heal)
+    actual_heal = state.player.hp - hp_before
+    trace.append(f"{state.player.name} HP: {hp_before} +{actual_heal} → {state.player.hp}/{state.player.max_hp}")
+    return {
+        "action": "rest",
+        "success": True,
+        "heal": actual_heal,
+        "actor_hp": state.player.hp,
+        "actor_max_hp": state.player.max_hp,
+        "_trace": trace,
+    }
+
+
+def _process_taunt(action: dict, state: GameState) -> dict:
+    trace = []
+    trace.append(f"{state.player.name} 嘲讽 → {state.enemy.name}")
+    if "taunted" not in state.enemy.status:
+        state.enemy.status.append("taunted")
+    trace.append(f"效果: {state.enemy.name} 下次攻击力 -3")
+    return {
+        "action": "taunt",
+        "success": True,
+        "target": state.enemy.name,
+        "effect": "next_attack_weakened",
+        "_trace": trace,
+    }
+
+
+def _process_examine(action: dict, state: GameState) -> dict:
+    enemy = state.enemy
+    trace = []
+    trace.append(f"{state.player.name} 仔细观察 {enemy.name}")
+    hp_ratio = enemy.hp / enemy.max_hp
+    if hp_ratio > 0.7:
+        condition = "状态良好"
+    elif hp_ratio > 0.3:
+        condition = "伤痕累累"
+    else:
+        condition = "摇摇欲坠"
+    trace.append(f"观察结果: HP {enemy.hp}/{enemy.max_hp} ({hp_ratio:.0%}), ATK {enemy.atk}, DEF {enemy.defense}")
+    trace.append(f"状态判断: {condition}")
+    return {
+        "action": "examine",
+        "success": True,
+        "target": enemy.name,
+        "target_hp": enemy.hp,
+        "target_max_hp": enemy.max_hp,
+        "target_atk": enemy.atk,
+        "target_def": enemy.defense,
+        "condition": condition,
+        "_trace": trace,
+    }
+
+
+def _process_invalid(action: dict, state: GameState) -> dict:
+    trace = []
+    original = action.get("original", "???")
+    trace.append(f"{state.player.name} 犹豫不决")
+    trace.append(f"原始输入: \"{original}\"")
+    trace.append(f"结果: 浪费了一个回合")
+    return {
+        "action": "invalid",
+        "success": False,
+        "original": original,
+        "actor_hp": state.player.hp,
+        "actor_max_hp": state.player.max_hp,
+        "_trace": trace,
+    }
+
+
 def enemy_turn(state: GameState) -> dict:
     enemy = state.enemy
     player = state.player
@@ -160,8 +240,14 @@ def enemy_turn(state: GameState) -> dict:
 
     trace.append(f"决策: 攻击 → {player.name}")
 
-    raw = enemy.atk - player.defense // 2
-    trace.append(f"基础伤害: ATK({enemy.atk}) - DEF({player.defense})÷2 = {raw}")
+    atk = enemy.atk
+    if "taunted" in enemy.status:
+        atk = max(1, atk - 3)
+        enemy.status.remove("taunted")
+        trace.append(f"被嘲讽: ATK {enemy.atk} → {atk}")
+
+    raw = atk - player.defense // 2
+    trace.append(f"基础伤害: ATK({atk}) - DEF({player.defense})÷2 = {raw}")
 
     roll = random.randint(-3, 3)
     base_damage = max(1, raw + roll)
