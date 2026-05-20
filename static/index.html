@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI RPG - 哥布林洞窟</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background: #0f0f23;
+    color: #e0e0e0;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 2;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+    image-rendering: pixelated;
+}
+
+#game {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: calc(100vh - 32px);
+}
+
+.panel {
+    border: 4px solid #e6c422;
+    background: #1a1a2e;
+    padding: 12px;
+}
+
+/* --- Header --- */
+#header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+#header h1 {
+    font-size: 18px;
+    color: #e6c422;
+}
+#header-buttons {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.mode-badge {
+    font-size: 10px;
+    padding: 3px 6px;
+    border: 2px solid;
+}
+.mode-badge.ai { border-color: #44ff44; color: #44ff44; }
+.mode-badge.mock { border-color: #ffcc00; color: #ffcc00; }
+
+/* --- Status panel --- */
+#status {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+}
+.char-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.char-name {
+    min-width: 110px;
+    color: #ffcc00;
+}
+.hp-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    min-width: 200px;
+}
+.hp-bar {
+    flex: 1;
+    height: 20px;
+    background: #333;
+    border: 2px solid #555;
+    position: relative;
+    overflow: hidden;
+}
+.hp-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+.hp-fill.high { background: #44ff44; }
+.hp-fill.mid { background: #ffcc00; }
+.hp-fill.low { background: #ff4444; }
+.hp-text {
+    min-width: 80px;
+    text-align: right;
+    font-size: 11px;
+}
+.items-row {
+    font-size: 11px;
+    color: #88ccff;
+    padding-left: 96px;
+}
+
+/* --- Narrative log --- */
+#narrative-wrap {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+#narrative {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 4px;
+    scroll-behavior: smooth;
+}
+#narrative::-webkit-scrollbar { width: 6px; }
+#narrative::-webkit-scrollbar-track { background: #1a1a2e; }
+#narrative::-webkit-scrollbar-thumb { background: #e6c422; }
+
+.log-entry { margin-bottom: 14px; }
+.log-system { color: #888; font-size: 12px; }
+.log-intro { color: #e6c422; font-size: 14px; line-height: 2.2; }
+.log-player { color: #44ff44; }
+.log-player::before { content: "> "; }
+.log-narrator { color: #c8c8e8; }
+
+.log-trace {
+    margin-top: 4px;
+    font-size: 10px;
+}
+.log-trace summary {
+    cursor: pointer;
+    color: #666;
+    outline: none;
+}
+.log-trace summary:hover { color: #e6c422; }
+.trace-content {
+    margin-top: 4px;
+    padding: 6px;
+    background: #12122a;
+    border: 2px solid #333;
+    color: #7a7a9a;
+    line-height: 1.8;
+    white-space: pre-wrap;
+}
+.trace-section-label {
+    color: #e6c422;
+    display: block;
+    margin-top: 4px;
+}
+.trace-section-label:first-child { margin-top: 0; }
+
+/* --- Loading --- */
+.loading-msg {
+    color: #e6c422;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* --- Game Over --- */
+.log-gameover {
+    color: #e6c422;
+    font-size: 14px;
+    text-align: center;
+    padding: 12px;
+    border: 2px solid #e6c422;
+    margin-top: 8px;
+}
+
+/* --- Input panel --- */
+#input-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+#input-row {
+    display: flex;
+    gap: 6px;
+}
+#user-input {
+    flex: 1;
+    background: #12122a;
+    border: 2px solid #555;
+    color: #e0e0e0;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 13px;
+    padding: 8px;
+    outline: none;
+}
+#user-input:focus { border-color: #e6c422; }
+#user-input:disabled { opacity: 0.4; }
+
+button {
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 12px;
+    background: #333366;
+    color: #e0e0e0;
+    border: 2px solid #5555aa;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background 0.1s;
+}
+button:hover:not(:disabled) {
+    background: #4444aa;
+    border-color: #e6c422;
+}
+button:active:not(:disabled) {
+    transform: translateY(1px);
+}
+button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+#btn-new {
+    background: #553322;
+    border-color: #aa6633;
+    font-size: 10px;
+    padding: 4px 8px;
+}
+#btn-new:hover:not(:disabled) {
+    background: #774433;
+}
+</style>
+</head>
+<body>
+<div id="game">
+    <div class="panel" id="header">
+        <h1>AI RPG</h1>
+        <div id="header-buttons">
+            <span id="mode-badge" class="mode-badge ai">AI</span>
+            <button id="btn-new" onclick="newGame()">NEW GAME</button>
+        </div>
+    </div>
+
+    <div class="panel" id="status">
+        <div class="char-row">
+            <span class="char-name" id="p-name">勇者</span>
+            <div class="hp-bar-wrap">
+                <div class="hp-bar"><div class="hp-fill high" id="p-hp-fill" style="width:100%"></div></div>
+                <span class="hp-text" id="p-hp-text">100/100</span>
+            </div>
+        </div>
+        <div class="items-row" id="p-items"></div>
+        <div class="char-row">
+            <span class="char-name" id="e-name">哥布林首领</span>
+            <div class="hp-bar-wrap">
+                <div class="hp-bar"><div class="hp-fill high" id="e-hp-fill" style="width:100%"></div></div>
+                <span class="hp-text" id="e-hp-text">50/50</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" id="narrative-wrap">
+        <div id="narrative"></div>
+    </div>
+
+    <div class="panel" id="input-panel">
+        <div id="input-row">
+            <input type="text" id="user-input" placeholder="输入你的行动..."
+                   onkeydown="if(event.key==='Enter')sendAction()" disabled>
+            <button id="btn-send" onclick="sendAction()" disabled>发送</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const state = { sessionId: null, loading: false, gameOver: false, mockMode: false };
+
+const LOADING_MSGS = [
+    "命运之骰正在翻滚...",
+    "战斗结果计算中...",
+    "叙事者正在记录...",
+    "冒险仍在继续...",
+];
+
+function init() {
+    const params = new URLSearchParams(location.search);
+    state.mockMode = params.get('mock') === 'true';
+    newGame();
+}
+
+async function newGame() {
+    state.loading = true;
+    state.gameOver = false;
+    $('narrative').innerHTML = '';
+    setInputEnabled(false);
+    updateModeBadge();
+
+    try {
+        const res = await fetch('/api/new', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ mock: state.mockMode }),
+        });
+        const data = await res.json();
+        state.sessionId = data.session_id;
+        sessionStorage.setItem('session_id', data.session_id);
+        updateStatus(data.state);
+        appendLog(data.intro, 'intro');
+    } catch(e) {
+        appendLog('连接服务器失败: ' + e.message, 'system');
+    }
+
+    state.loading = false;
+    setInputEnabled(true);
+    $('user-input').focus();
+}
+
+async function sendAction() {
+    const input = $('user-input').value.trim();
+    if (!input || state.loading || state.gameOver) return;
+    $('user-input').value = '';
+    await doAction(input);
+}
+
+async function doAction(input) {
+    state.loading = true;
+    setInputEnabled(false);
+    appendLog(input, 'player');
+
+    const loadingEl = appendLog(
+        LOADING_MSGS[Math.floor(Math.random() * LOADING_MSGS.length)],
+        'loading'
+    );
+
+    try {
+        const res = await fetch('/api/action', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ session_id: state.sessionId, input }),
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || 'Unknown error');
+        }
+
+        const data = await res.json();
+        loadingEl.remove();
+
+        updateStatus(data.state);
+        appendNarrative(data.narrative, data.trace);
+
+        if (data.game_over) {
+            state.gameOver = true;
+            appendGameOver(data.game_over.message);
+        }
+    } catch(e) {
+        loadingEl.remove();
+        appendLog('请求失败: ' + e.message, 'system');
+    }
+
+    state.loading = false;
+    if (!state.gameOver) {
+        setInputEnabled(true);
+        $('user-input').focus();
+    }
+}
+
+function updateStatus(s) {
+    const p = s.player, e = s.enemy;
+
+    $('p-name').textContent = p.name;
+    $('e-name').textContent = e.name;
+
+    setHP('p', p.hp, p.max_hp);
+    setHP('e', e.hp, e.max_hp);
+
+    const items = [];
+    if (p.items.healing_potion > 0) items.push('药水 x' + p.items.healing_potion);
+    $('p-items').textContent = items.join('  ') || '';
+}
+
+function setHP(prefix, hp, max) {
+    const pct = max > 0 ? hp / max : 0;
+    $(prefix + '-hp-fill').style.width = (pct * 100) + '%';
+    $(prefix + '-hp-fill').className = 'hp-fill ' + (pct > 0.5 ? 'high' : pct > 0.25 ? 'mid' : 'low');
+    $(prefix + '-hp-text').textContent = hp + '/' + max;
+}
+
+function appendLog(text, type) {
+    const div = document.createElement('div');
+    div.className = 'log-entry log-' + type;
+    div.textContent = text;
+    $('narrative').appendChild(div);
+    scrollToBottom();
+    return div;
+}
+
+function appendNarrative(text, trace) {
+    const entry = document.createElement('div');
+    entry.className = 'log-entry';
+
+    const narDiv = document.createElement('div');
+    narDiv.className = 'log-narrator';
+    entry.appendChild(narDiv);
+
+    if (trace && (trace.player.length || trace.enemy.length)) {
+        const details = document.createElement('details');
+        details.className = 'log-trace';
+        const summary = document.createElement('summary');
+        summary.textContent = '引擎计算详情';
+        details.appendChild(summary);
+
+        const content = document.createElement('div');
+        content.className = 'trace-content';
+
+        if (trace.player.length) {
+            const label = document.createElement('span');
+            label.className = 'trace-section-label';
+            label.textContent = '[ 玩家行动 ]';
+            content.appendChild(label);
+            content.appendChild(document.createTextNode('\n' + trace.player.join('\n')));
+        }
+        if (trace.enemy.length) {
+            const label = document.createElement('span');
+            label.className = 'trace-section-label';
+            label.textContent = '\n[ 敌方行动 ]';
+            content.appendChild(label);
+            content.appendChild(document.createTextNode('\n' + trace.enemy.join('\n')));
+        }
+
+        details.appendChild(content);
+        entry.appendChild(details);
+    }
+
+    $('narrative').appendChild(entry);
+    typewriter(narDiv, text);
+}
+
+async function typewriter(el, text) {
+    for (const ch of text) {
+        el.textContent += ch;
+        scrollToBottom();
+        await sleep(20);
+    }
+}
+
+function appendGameOver(msg) {
+    const div = document.createElement('div');
+    div.className = 'log-entry log-gameover';
+    div.textContent = msg;
+    $('narrative').appendChild(div);
+    scrollToBottom();
+}
+
+function setInputEnabled(enabled) {
+    $('user-input').disabled = !enabled;
+    $('btn-send').disabled = !enabled;
+}
+
+function updateModeBadge() {
+    const badge = $('mode-badge');
+    if (state.mockMode) {
+        badge.textContent = 'MOCK';
+        badge.className = 'mode-badge mock';
+    } else {
+        badge.textContent = 'AI';
+        badge.className = 'mode-badge ai';
+    }
+}
+
+function scrollToBottom() {
+    const el = $('narrative');
+    el.scrollTop = el.scrollHeight;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+init();
+</script>
+</body>
+</html>
