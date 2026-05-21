@@ -11,3 +11,5 @@ BASE_URL = os.environ.get("BASE_URL", "https://api.deepseek.com")
 
 PARSER_MODEL = os.environ.get("PARSER_MODEL", "deepseek-chat")
 NARRATOR_MODEL = os.environ.get("NARRATOR_MODEL", "deepseek-chat")
+
+DEBUG = os.environ.get("DEBUG", "0") == "1"

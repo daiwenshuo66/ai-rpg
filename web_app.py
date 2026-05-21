@@ -10,12 +10,13 @@ from game_state import Character, GameState
 from engine import process_action, enemy_turn
 from ai_parser import parse_input, mock_parse
 from ai_narrator import narrate, mock_narrate
-
-INTRO_TEXT = (
-    "你走进一个阴暗的洞窟，火把的光芒照亮了前方——\n"
-    "一个体型壮硕的哥布林首领挡住了去路。\n"
-    "它手持一把生锈的弯刀，向你龇牙咧嘴。"
+from ai_character import (
+    BUDGET_TIERS, parse_character, mock_parse_character,
+    validate_and_recalculate, build_character,
 )
+from ai_enemy import generate_enemy, build_enemy
+from config import DEBUG
+import config
 
 
 # --- Session management ---
@@ -31,17 +32,6 @@ class Session:
 sessions: dict[str, Session] = {}
 
 
-def create_initial_state() -> GameState:
-    player = Character(
-        name="勇者", hp=100, max_hp=100, atk=15, defense=8,
-        items={"healing_potion": 2},
-    )
-    enemy = Character(
-        name="哥布林首领", hp=50, max_hp=50, atk=12, defense=5,
-    )
-    return GameState(player=player, enemy=enemy)
-
-
 # --- FastAPI app ---
 
 app = FastAPI()
@@ -49,6 +39,7 @@ app = FastAPI()
 
 class NewGameRequest(BaseModel):
     mock: bool = False
+    character: dict | None = None
 
 
 class ActionRequest(BaseModel):
@@ -56,15 +47,80 @@ class ActionRequest(BaseModel):
     input: str
 
 
+class ParseCharacterRequest(BaseModel):
+    description: str
+    budget: int | None = None
+    mock: bool = False
+
+
+@app.get("/api/tiers")
+async def get_tiers():
+    return {"tiers": BUDGET_TIERS}
+
+
+@app.post("/api/debug")
+async def toggle_debug():
+    import action_template
+    config.DEBUG = not config.DEBUG
+    action_template.DEBUG = config.DEBUG
+    return {"debug": config.DEBUG}
+
+
+@app.get("/api/templates")
+async def list_templates():
+    from action_template import get_all_templates
+    return {"templates": get_all_templates()}
+
+
+@app.post("/api/parse-character")
+async def handle_parse_character(req: ParseCharacterRequest):
+    if req.mock:
+        parsed = mock_parse_character(req.description, req.budget)
+    else:
+        parsed = await asyncio.to_thread(
+            parse_character, req.description, req.budget
+        )
+
+    parsed, breakdown, valid, error = validate_and_recalculate(parsed, req.budget)
+    return {
+        "character": parsed,
+        "breakdown": breakdown,
+        "valid": valid,
+        "error": error,
+    }
+
+
 @app.post("/api/new")
 async def new_game(req: NewGameRequest):
     session_id = uuid.uuid4().hex[:12]
-    state = create_initial_state()
+
+    if req.character:
+        _, _, valid, error = validate_and_recalculate(dict(req.character), None)
+        if not valid:
+            raise HTTPException(400, error)
+        player = build_character(req.character)
+    else:
+        player = Character(
+            name="散修", hp=100, max_hp=100, atk=15, defense=8,
+            items={"healing_potion": 2},
+        )
+
+    if req.mock:
+        enemy_data = generate_enemy(player, mock_mode=True)
+    else:
+        enemy_data = await asyncio.to_thread(generate_enemy, player, False)
+    enemy, enemy_desc = build_enemy(enemy_data)
+
+    state = GameState(player=player, enemy=enemy)
     sessions[session_id] = Session(state, req.mock)
+
+    title = enemy_data.get("title", "")
+    intro = f"【{enemy.name} · {title}】\n{enemy_desc}" if title else f"【{enemy.name}】\n{enemy_desc}"
+
     return {
         "session_id": session_id,
         "state": state.to_context(),
-        "intro": INTRO_TEXT,
+        "intro": intro,
     }
 
 
@@ -108,11 +164,11 @@ async def handle_action(req: ActionRequest):
             if state.player.hp <= 0:
                 game_over = {"winner": state.enemy.name, "message": "你被击败了... GAME OVER"}
             elif state.enemy.hp <= 0:
-                game_over = {"winner": state.player.name, "message": "胜利！哥布林首领倒下了！"}
+                game_over = {"winner": state.player.name, "message": f"胜利！{state.enemy.name} 倒下了！"}
             else:
                 game_over = {"winner": None, "message": "你逃离了战斗。"}
 
-        return {
+        response = {
             "state": state.to_context(),
             "action": {k: v for k, v in player_result.items() if k != "_trace"},
             "enemy_result": (
@@ -126,6 +182,14 @@ async def handle_action(req: ActionRequest):
             },
             "game_over": game_over,
         }
+
+        if config.DEBUG:
+            response["debug"] = {
+                "parsed_action": action,
+                "raw_player_result": player_result,
+            }
+
+        return response
 
 
 # --- Session cleanup ---

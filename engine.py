@@ -4,6 +4,10 @@ from game_state import GameState
 
 def process_action(action: dict, state: GameState) -> dict:
     action_type = action.get("action")
+
+    if action_type == "dynamic":
+        return _process_dynamic(action, state)
+
     handlers = {
         "attack": _process_attack,
         "defend": _process_defend,
@@ -650,6 +654,20 @@ def _process_invalid(action: dict, state: GameState) -> dict:
         "actor_max_hp": state.player.max_hp,
         "_trace": trace,
     }
+
+
+def _process_dynamic(action: dict, state: GameState) -> dict:
+    from action_template import validate_template, execute_dynamic, lookup_template
+    template = action.get("template", {})
+
+    cached = lookup_template(template.get("name", ""))
+    if cached:
+        template = dict(cached)
+
+    template, valid, error = validate_template(template)
+    if not valid:
+        return _process_invalid({"original": error}, state)
+    return execute_dynamic(template, state)
 
 
 # ---------- enemy turn ----------
