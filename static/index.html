@@ -3,23 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI RPG - 哥布林洞窟</title>
+<title>修仙 RPG - 灵根觉醒</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+::selection {
+    background: rgba(90, 171, 139, 0.3);
+    color: #e8d5a3;
+}
+
 body {
-    background: #0f0f23;
-    color: #e0e0e0;
-    font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 2;
+    background: radial-gradient(ellipse at 50% 0%, #141e28 0%, #0b0f14 60%);
+    color: #d8ccb4;
+    font-family: 'Noto Serif SC', 'Songti SC', 'SimSun', serif;
+    font-size: 15px;
+    line-height: 1.8;
     min-height: 100vh;
     display: flex;
     justify-content: center;
     padding: 16px;
-    image-rendering: pixelated;
 }
 
 #game {
@@ -32,10 +36,36 @@ body {
 }
 
 .panel {
-    border: 4px solid #e6c422;
-    background: #1a1a2e;
-    padding: 12px;
+    border: 2px solid #3a3428;
+    border-top: 3px solid #8b7355;
+    border-bottom: 3px solid #8b7355;
+    background: linear-gradient(180deg, #181d22 0%, #151a1f 100%);
+    padding: 16px;
+    position: relative;
+    box-shadow: 0 0 12px rgba(90, 171, 139, 0.04), inset 0 0 20px rgba(0,0,0,0.3);
 }
+.panel::before,
+.panel::after {
+    content: '';
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-color: #c9a555;
+    border-style: solid;
+    pointer-events: none;
+}
+.panel::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+}
+.panel::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+}
+
+.hidden { display: none !important; }
 
 /* --- Header --- */
 #header {
@@ -46,8 +76,11 @@ body {
     gap: 8px;
 }
 #header h1 {
-    font-size: 18px;
-    color: #e6c422;
+    font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+    font-size: 22px;
+    color: #c9a555;
+    text-shadow: 0 0 10px rgba(201, 165, 85, 0.25);
+    letter-spacing: 4px;
 }
 #header-buttons {
     display: flex;
@@ -55,19 +88,138 @@ body {
     align-items: center;
 }
 .mode-badge {
-    font-size: 10px;
-    padding: 3px 6px;
-    border: 2px solid;
+    font-size: 11px;
+    padding: 3px 8px;
+    border: 1px solid;
+    border-radius: 2px;
+    letter-spacing: 1px;
 }
-.mode-badge.ai { border-color: #44ff44; color: #44ff44; }
-.mode-badge.mock { border-color: #ffcc00; color: #ffcc00; }
+.mode-badge.ai { border-color: #5aab8b; color: #5aab8b; }
+.mode-badge.mock { border-color: #d4a853; color: #d4a853; }
+
+/* --- Creation Panel --- */
+#creation-panel {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+#creation-panel h2 {
+    font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+    color: #5aab8b;
+    font-size: 16px;
+    text-align: center;
+    text-shadow: 0 0 8px rgba(90, 171, 139, 0.2);
+    letter-spacing: 3px;
+}
+.tier-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+.tier-btn {
+    padding: 14px 10px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 2;
+    cursor: pointer;
+    border: 1px solid #3a3428;
+    background: linear-gradient(180deg, #121820, #0e1318);
+    color: #d8ccb4;
+    transition: all 0.3s ease;
+    font-family: 'Noto Serif SC', serif;
+}
+.tier-btn:hover {
+    border-color: #5aab8b;
+    box-shadow: 0 0 8px rgba(90, 171, 139, 0.15);
+}
+.tier-btn.selected {
+    border-color: #5aab8b;
+    background: linear-gradient(180deg, #152520, #0e1a16);
+    box-shadow: 0 0 12px rgba(90, 171, 139, 0.2), inset 0 0 15px rgba(90, 171, 139, 0.05);
+}
+.tier-label {
+    font-family: 'ZCOOL XiaoWei', serif;
+    color: #c9a555;
+    display: block;
+    font-size: 14px;
+    letter-spacing: 2px;
+}
+.tier-points { color: #7ab4d4; display: block; font-size: 12px; }
+.tier-desc { color: #8a7e6e; font-size: 12px; display: block; }
+
+#desc-section { display: flex; flex-direction: column; gap: 8px; }
+#desc-section label { color: #7ab4d4; font-size: 13px; }
+#char-desc {
+    width: 100%;
+    min-height: 60px;
+    background: #0e1318;
+    border: 1px solid #3a3428;
+    color: #d8ccb4;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    line-height: 1.8;
+    padding: 10px;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.3s;
+}
+#char-desc:focus { border-color: #5aab8b; box-shadow: 0 0 6px rgba(90, 171, 139, 0.15); }
+#btn-parse {
+    align-self: flex-end;
+}
+
+/* --- Preview --- */
+#preview-section {
+    border: 1px solid #5aab8b;
+    border-left: 3px double #5aab8b;
+    padding: 14px;
+    padding-left: 16px;
+    background: #0e1318;
+    font-size: 14px;
+    line-height: 2;
+    transition: border-color 0.3s;
+}
+#preview-section.invalid { border-color: #c94444; }
+.preview-name {
+    font-family: 'ZCOOL XiaoWei', serif;
+    color: #c9a555;
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+.preview-title { color: #8a7e6e; font-size: 13px; }
+.preview-stats { color: #4ec9a0; margin-top: 6px; }
+.preview-stat { display: inline-block; margin-right: 16px; }
+.preview-stat .val { color: #e8d5a3; }
+.preview-stat .cost { color: #8a7e6e; font-size: 12px; }
+.preview-items { color: #7ab4d4; margin-top: 4px; }
+.preview-traits { margin-top: 6px; }
+.preview-trait { font-size: 13px; line-height: 1.8; }
+.preview-trait.mechanical { color: #d4a853; }
+.preview-trait.cosmetic { color: #8a7e6e; }
+.preview-total {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px solid #3a3428;
+    font-size: 13px;
+}
+.preview-total.over { color: #c94444; }
+.preview-total.ok { color: #4ec9a0; }
+.preview-error { color: #c94444; margin-top: 6px; font-size: 13px; }
+
+#confirm-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
 
 /* --- Status panel --- */
 #status {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    font-size: 13px;
+    font-size: 14px;
 }
 .char-row {
     display: flex;
@@ -77,38 +229,67 @@ body {
 }
 .char-name {
     min-width: 110px;
-    color: #ffcc00;
+    font-family: 'ZCOOL XiaoWei', serif;
+    color: #c9a555;
+    font-size: 15px;
+    letter-spacing: 1px;
 }
 .hp-bar-wrap {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     flex: 1;
     min-width: 200px;
 }
 .hp-bar {
     flex: 1;
-    height: 20px;
-    background: #333;
-    border: 2px solid #555;
+    height: 18px;
+    background: #1a1e24;
+    border: 1px solid #3a3428;
+    border-radius: 2px;
     position: relative;
     overflow: hidden;
+}
+.hp-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 18px,
+        rgba(255,255,255,0.03) 18px,
+        rgba(255,255,255,0.03) 19px
+    );
+    z-index: 1;
+    pointer-events: none;
 }
 .hp-fill {
     height: 100%;
     transition: width 0.5s ease;
+    border-radius: 1px;
 }
-.hp-fill.high { background: #44ff44; }
-.hp-fill.mid { background: #ffcc00; }
-.hp-fill.low { background: #ff4444; }
+.hp-fill.high {
+    background: linear-gradient(90deg, #2d7a5e, #4ec9a0);
+    box-shadow: 0 0 6px rgba(78, 201, 160, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.hp-fill.mid {
+    background: linear-gradient(90deg, #8b6d2e, #d4a853);
+    box-shadow: 0 0 6px rgba(212, 168, 83, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.hp-fill.low {
+    background: linear-gradient(90deg, #6b2222, #c94444);
+    box-shadow: 0 0 6px rgba(201, 68, 68, 0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+}
 .hp-text {
     min-width: 80px;
     text-align: right;
-    font-size: 11px;
+    font-size: 13px;
+    color: #d8ccb4;
 }
 .items-row {
-    font-size: 11px;
-    color: #88ccff;
+    font-size: 13px;
+    color: #7ab4d4;
     padding-left: 96px;
 }
 
@@ -118,6 +299,16 @@ body {
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    position: relative;
+}
+#narrative-wrap::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 16px;
+    background: linear-gradient(180deg, #151a1f, transparent);
+    pointer-events: none;
+    z-index: 1;
 }
 #narrative {
     flex: 1;
@@ -125,38 +316,46 @@ body {
     padding-right: 4px;
     scroll-behavior: smooth;
 }
-#narrative::-webkit-scrollbar { width: 6px; }
-#narrative::-webkit-scrollbar-track { background: #1a1a2e; }
-#narrative::-webkit-scrollbar-thumb { background: #e6c422; }
+#narrative::-webkit-scrollbar { width: 5px; }
+#narrative::-webkit-scrollbar-track { background: #0e1318; }
+#narrative::-webkit-scrollbar-thumb { background: #5aab8b; border-radius: 3px; }
 
 .log-entry { margin-bottom: 14px; }
-.log-system { color: #888; font-size: 12px; }
-.log-intro { color: #e6c422; font-size: 14px; line-height: 2.2; }
-.log-player { color: #44ff44; }
+.log-system { color: #8a7e6e; font-size: 13px; font-style: italic; }
+.log-intro {
+    font-family: 'ZCOOL XiaoWei', serif;
+    color: #c9a555;
+    font-size: 15px;
+    line-height: 2;
+    text-shadow: 0 0 6px rgba(201, 165, 85, 0.15);
+}
+.log-player { color: #4ec9a0; }
 .log-player::before { content: "> "; }
-.log-narrator { color: #c8c8e8; }
+.log-narrator { color: #d8ccb4; }
 
 .log-trace {
     margin-top: 4px;
-    font-size: 10px;
+    font-size: 12px;
 }
 .log-trace summary {
     cursor: pointer;
-    color: #666;
+    color: #5a5448;
     outline: none;
+    transition: color 0.2s;
 }
-.log-trace summary:hover { color: #e6c422; }
+.log-trace summary:hover { color: #c9a555; }
 .trace-content {
     margin-top: 4px;
-    padding: 6px;
-    background: #12122a;
-    border: 2px solid #333;
-    color: #7a7a9a;
-    line-height: 1.8;
+    padding: 8px;
+    background: #0e1318;
+    border: 1px solid #3a3428;
+    color: #7a7a6e;
+    line-height: 1.7;
     white-space: pre-wrap;
+    font-size: 12px;
 }
 .trace-section-label {
-    color: #e6c422;
+    color: #c9a555;
     display: block;
     margin-top: 4px;
 }
@@ -164,22 +363,26 @@ body {
 
 /* --- Loading --- */
 .loading-msg {
-    color: #e6c422;
-    animation: pulse 1.5s ease-in-out infinite;
+    color: #5aab8b;
+    animation: spiritPulse 2s ease-in-out infinite;
 }
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+@keyframes spiritPulse {
+    0%, 100% { opacity: 1; text-shadow: 0 0 6px rgba(90, 171, 139, 0.3); }
+    50% { opacity: 0.35; text-shadow: none; }
 }
 
 /* --- Game Over --- */
 .log-gameover {
-    color: #e6c422;
-    font-size: 14px;
+    font-family: 'ZCOOL XiaoWei', serif;
+    color: #e8d5a3;
+    font-size: 18px;
     text-align: center;
-    padding: 12px;
-    border: 2px solid #e6c422;
-    margin-top: 8px;
+    padding: 16px;
+    border: double 4px #c9a555;
+    margin-top: 12px;
+    background: rgba(201, 165, 85, 0.04);
+    text-shadow: 0 0 10px rgba(201, 165, 85, 0.2);
+    letter-spacing: 2px;
 }
 
 /* --- Input panel --- */
@@ -194,82 +397,117 @@ body {
 }
 #user-input {
     flex: 1;
-    background: #12122a;
-    border: 2px solid #555;
-    color: #e0e0e0;
-    font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 13px;
-    padding: 8px;
+    background: #0e1318;
+    border: 1px solid #3a3428;
+    color: #d8ccb4;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    padding: 10px;
     outline: none;
+    border-radius: 2px;
+    transition: border-color 0.3s;
 }
-#user-input:focus { border-color: #e6c422; }
+#user-input:focus { border-color: #5aab8b; box-shadow: 0 0 6px rgba(90, 171, 139, 0.15); }
 #user-input:disabled { opacity: 0.4; }
 
 button {
-    font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 12px;
-    background: #333366;
-    color: #e0e0e0;
-    border: 2px solid #5555aa;
-    padding: 6px 12px;
+    font-family: 'Noto Serif SC', serif;
+    font-size: 14px;
+    background: linear-gradient(180deg, #2a3a35, #1e2e28);
+    color: #d8ccb4;
+    border: 1px solid #5aab8b;
+    padding: 8px 16px;
     cursor: pointer;
-    transition: background 0.1s;
+    border-radius: 2px;
+    transition: all 0.3s ease;
+    letter-spacing: 1px;
 }
 button:hover:not(:disabled) {
-    background: #4444aa;
-    border-color: #e6c422;
+    background: linear-gradient(180deg, #3a4a42, #2a3a35);
+    border-color: #7dd4b4;
+    box-shadow: 0 0 8px rgba(90, 171, 139, 0.25);
+    color: #e8d5a3;
 }
 button:active:not(:disabled) {
     transform: translateY(1px);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
 }
 button:disabled {
     opacity: 0.3;
     cursor: not-allowed;
 }
 #btn-new {
-    background: #553322;
-    border-color: #aa6633;
-    font-size: 10px;
-    padding: 4px 8px;
+    background: linear-gradient(180deg, #3a2020, #2a1818);
+    border-color: #c94444;
+    font-size: 12px;
+    padding: 5px 10px;
 }
 #btn-new:hover:not(:disabled) {
-    background: #774433;
+    background: linear-gradient(180deg, #4a2828, #3a2020);
+    border-color: #e05555;
+    box-shadow: 0 0 8px rgba(201, 68, 68, 0.25);
 }
 </style>
 </head>
 <body>
 <div id="game">
     <div class="panel" id="header">
-        <h1>AI RPG</h1>
+        <h1>修仙 RPG</h1>
         <div id="header-buttons">
             <span id="mode-badge" class="mode-badge ai">AI</span>
-            <button id="btn-new" onclick="newGame()">NEW GAME</button>
+            <button id="btn-debug" onclick="toggleDebug()" style="font-size:10px;padding:4px 6px;background:#222;border-color:#555;">DBG:OFF</button>
+            <button id="btn-new" onclick="resetToCreation()">NEW GAME</button>
         </div>
     </div>
 
-    <div class="panel" id="status">
+    <!-- Character Creation Phase -->
+    <div class="panel" id="creation-panel">
+        <h2>灵根觉醒 - 角色创建</h2>
+
+        <div id="tier-section">
+            <div class="tier-grid" id="tier-grid"></div>
+        </div>
+
+        <div id="desc-section" class="hidden">
+            <label>描述你的角色（修仙世界，自由发挥）：</label>
+            <textarea id="char-desc" placeholder="例：我是一个以剑入道的剑修，性格冷淡，追求剑道极致..."></textarea>
+            <button id="btn-parse" onclick="parseCharacter()">解析角色</button>
+        </div>
+
+        <div id="preview-section" class="hidden">
+        </div>
+
+        <div id="confirm-row" class="hidden">
+            <button onclick="confirmCharacter()">确认创建</button>
+            <button onclick="reDescribe()">重新描述</button>
+            <button onclick="reBudget()">重选灵根</button>
+        </div>
+    </div>
+
+    <!-- Combat Phase (hidden initially) -->
+    <div class="panel hidden" id="status">
         <div class="char-row">
-            <span class="char-name" id="p-name">勇者</span>
+            <span class="char-name" id="p-name">-</span>
             <div class="hp-bar-wrap">
                 <div class="hp-bar"><div class="hp-fill high" id="p-hp-fill" style="width:100%"></div></div>
-                <span class="hp-text" id="p-hp-text">100/100</span>
+                <span class="hp-text" id="p-hp-text">-</span>
             </div>
         </div>
         <div class="items-row" id="p-items"></div>
         <div class="char-row">
-            <span class="char-name" id="e-name">哥布林首领</span>
+            <span class="char-name" id="e-name">-</span>
             <div class="hp-bar-wrap">
                 <div class="hp-bar"><div class="hp-fill high" id="e-hp-fill" style="width:100%"></div></div>
-                <span class="hp-text" id="e-hp-text">50/50</span>
+                <span class="hp-text" id="e-hp-text">-</span>
             </div>
         </div>
     </div>
 
-    <div class="panel" id="narrative-wrap">
+    <div class="panel hidden" id="narrative-wrap">
         <div id="narrative"></div>
     </div>
 
-    <div class="panel" id="input-panel">
+    <div class="panel hidden" id="input-panel">
         <div id="input-row">
             <input type="text" id="user-input" placeholder="输入你的行动..."
                    onkeydown="if(event.key==='Enter')sendAction()" disabled>
@@ -280,46 +518,209 @@ button:disabled {
 
 <script>
 const $ = id => document.getElementById(id);
-const state = { sessionId: null, loading: false, gameOver: false, mockMode: false };
+const state = {
+    phase: 'creation',
+    sessionId: null,
+    loading: false,
+    gameOver: false,
+    mockMode: false,
+    debugMode: false,
+    budget: null,
+    tierKey: null,
+    parsedCharacter: null,
+};
 
 const LOADING_MSGS = [
-    "命运之骰正在翻滚...",
-    "战斗结果计算中...",
-    "叙事者正在记录...",
-    "冒险仍在继续...",
+    "灵力运转中...",
+    "天机推演中...",
+    "命数计算中...",
+    "道韵感应中...",
 ];
 
 function init() {
     const params = new URLSearchParams(location.search);
     state.mockMode = params.get('mock') === 'true';
-    newGame();
+    updateModeBadge();
+    showCreation();
 }
 
-async function newGame() {
+// ==================== Creation Phase ====================
+
+function showCreation() {
+    state.phase = 'creation';
+    state.parsedCharacter = null;
+    $('creation-panel').classList.remove('hidden');
+    $('status').classList.add('hidden');
+    $('narrative-wrap').classList.add('hidden');
+    $('input-panel').classList.add('hidden');
+    loadTiers();
+}
+
+function loadTiers() {
+    const tiers = {
+        waste:    {label: "废灵根", points: 10,   desc: "资质平庸，逆天改命"},
+        normal:   {label: "普通灵根", points: 50,   desc: "中规中矩，稳步修行"},
+        heaven:   {label: "天灵根", points: 100,  desc: "天赋异禀，前途无量"},
+        immortal: {label: "仙体", points: null, desc: "无限资质，自由创造"},
+    };
+
+    const grid = $('tier-grid');
+    grid.innerHTML = '';
+    for (const [key, tier] of Object.entries(tiers)) {
+        const div = document.createElement('div');
+        div.className = 'tier-btn';
+        div.dataset.key = key;
+        const pts = tier.points !== null ? tier.points + '点' : '无限';
+        div.innerHTML = `<span class="tier-label">${tier.label}</span><span class="tier-points">${pts}</span><span class="tier-desc">${tier.desc}</span>`;
+        div.onclick = () => selectTier(key, tier.points);
+        grid.appendChild(div);
+    }
+
+    $('desc-section').classList.add('hidden');
+    $('preview-section').classList.add('hidden');
+    $('confirm-row').classList.add('hidden');
+}
+
+function selectTier(key, points) {
+    state.tierKey = key;
+    state.budget = points;
+
+    document.querySelectorAll('.tier-btn').forEach(el => {
+        el.classList.toggle('selected', el.dataset.key === key);
+    });
+
+    $('desc-section').classList.remove('hidden');
+    $('preview-section').classList.add('hidden');
+    $('confirm-row').classList.add('hidden');
+    $('char-desc').focus();
+}
+
+async function parseCharacter() {
+    const desc = $('char-desc').value.trim();
+    if (!desc) return;
+
+    $('btn-parse').disabled = true;
+    $('btn-parse').textContent = '解析中...';
+
+    try {
+        const res = await fetch('/api/parse-character', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                description: desc,
+                budget: state.budget,
+                mock: state.mockMode,
+            }),
+        });
+        const data = await res.json();
+        state.parsedCharacter = data.character;
+        renderPreview(data.character, data.breakdown, data.valid, data.error);
+    } catch(e) {
+        renderPreviewError('请求失败: ' + e.message);
+    }
+
+    $('btn-parse').disabled = false;
+    $('btn-parse').textContent = '解析角色';
+}
+
+function renderPreview(char, breakdown, valid, error) {
+    const section = $('preview-section');
+    section.classList.remove('hidden', 'invalid');
+    if (!valid) section.classList.add('invalid');
+
+    const budgetStr = state.budget !== null ? state.budget : '∞';
+    const totalClass = valid ? 'ok' : 'over';
+
+    let traitsHtml = '';
+    if (char.traits && char.traits.length) {
+        traitsHtml = char.traits.map(t => {
+            const cls = t.mechanical ? 'mechanical' : 'cosmetic';
+            const marker = t.mechanical ? '★' : '☆';
+            return `<div class="preview-trait ${cls}">${marker} ${t.name || t.id} - ${t.description || ''}</div>`;
+        }).join('');
+    }
+
+    const potions = (char.items && char.items.healing_potion) || 0;
+    const itemsHtml = potions > 0 ? `<div class="preview-items">回血丹 x${potions} (${breakdown.items || 0}点)</div>` : '';
+
+    section.innerHTML = `
+        <div class="preview-name">${char.name || '?'}</div>
+        ${char.title ? `<div class="preview-title">${char.title}</div>` : ''}
+        <div class="preview-stats">
+            <span class="preview-stat">气血 <span class="val">${char.stats.hp}</span> <span class="cost">(${breakdown.hp}点)</span></span>
+            <span class="preview-stat">攻击 <span class="val">${char.stats.atk}</span> <span class="cost">(${breakdown.atk}点)</span></span>
+            <span class="preview-stat">防御 <span class="val">${char.stats.defense}</span> <span class="cost">(${breakdown.defense}点)</span></span>
+        </div>
+        ${itemsHtml}
+        ${traitsHtml ? `<div class="preview-traits">${traitsHtml}</div>` : ''}
+        <div class="preview-total ${totalClass}">总计: ${breakdown.total} / ${budgetStr} 资质点</div>
+        ${error ? `<div class="preview-error">${error}</div>` : ''}
+    `;
+
+    $('confirm-row').classList.toggle('hidden', !valid);
+}
+
+function renderPreviewError(msg) {
+    const section = $('preview-section');
+    section.classList.remove('hidden');
+    section.classList.add('invalid');
+    section.innerHTML = `<div class="preview-error">${msg}</div>`;
+    $('confirm-row').classList.add('hidden');
+}
+
+function reDescribe() {
+    $('preview-section').classList.add('hidden');
+    $('confirm-row').classList.add('hidden');
+    $('char-desc').focus();
+}
+
+function reBudget() {
+    $('desc-section').classList.add('hidden');
+    $('preview-section').classList.add('hidden');
+    $('confirm-row').classList.add('hidden');
+    document.querySelectorAll('.tier-btn').forEach(el => el.classList.remove('selected'));
+}
+
+async function confirmCharacter() {
+    if (!state.parsedCharacter) return;
+    await startCombat(state.parsedCharacter);
+}
+
+// ==================== Combat Phase ====================
+
+async function startCombat(character) {
+    state.phase = 'combat';
     state.loading = true;
     state.gameOver = false;
+
+    $('creation-panel').classList.add('hidden');
+    $('status').classList.remove('hidden');
+    $('narrative-wrap').classList.remove('hidden');
+    $('input-panel').classList.remove('hidden');
     $('narrative').innerHTML = '';
     setInputEnabled(false);
-    updateModeBadge();
 
     try {
         const res = await fetch('/api/new', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ mock: state.mockMode }),
+            body: JSON.stringify({ mock: state.mockMode, character }),
         });
         const data = await res.json();
         state.sessionId = data.session_id;
-        sessionStorage.setItem('session_id', data.session_id);
         updateStatus(data.state);
         appendLog(data.intro, 'intro');
     } catch(e) {
-        appendLog('连接服务器失败: ' + e.message, 'system');
+        appendLog('连接失败: ' + e.message, 'system');
     }
 
     state.loading = false;
     setInputEnabled(true);
     $('user-input').focus();
+}
+
+function resetToCreation() {
+    showCreation();
 }
 
 async function sendAction() {
@@ -355,7 +756,7 @@ async function doAction(input) {
         loadingEl.remove();
 
         updateStatus(data.state);
-        appendNarrative(data.narrative, data.trace);
+        appendNarrative(data.narrative, data.trace, data.debug);
 
         if (data.game_over) {
             state.gameOver = true;
@@ -383,7 +784,7 @@ function updateStatus(s) {
     setHP('e', e.hp, e.max_hp);
 
     const items = [];
-    if (p.items.healing_potion > 0) items.push('药水 x' + p.items.healing_potion);
+    if (p.items && p.items.healing_potion > 0) items.push('回血丹 x' + p.items.healing_potion);
     $('p-items').textContent = items.join('  ') || '';
 }
 
@@ -403,7 +804,7 @@ function appendLog(text, type) {
     return div;
 }
 
-function appendNarrative(text, trace) {
+function appendNarrative(text, trace, debug) {
     const entry = document.createElement('div');
     entry.className = 'log-entry';
 
@@ -411,24 +812,37 @@ function appendNarrative(text, trace) {
     narDiv.className = 'log-narrator';
     entry.appendChild(narDiv);
 
-    if (trace && (trace.player.length || trace.enemy.length)) {
+    const hasTrace = trace && (trace.player.length || trace.enemy.length);
+    const hasDebug = debug && state.debugMode;
+
+    if (hasTrace || hasDebug) {
         const details = document.createElement('details');
         details.className = 'log-trace';
+        if (state.debugMode) details.open = true;
         const summary = document.createElement('summary');
-        summary.textContent = '引擎计算详情';
+        summary.textContent = state.debugMode ? '引擎计算详情 [DEBUG]' : '引擎计算详情';
         details.appendChild(summary);
 
         const content = document.createElement('div');
         content.className = 'trace-content';
 
-        if (trace.player.length) {
+        if (hasDebug) {
             const label = document.createElement('span');
             label.className = 'trace-section-label';
-            label.textContent = '[ 玩家行动 ]';
+            label.style.color = '#5aab8b';
+            label.textContent = '[ DEBUG: 解析结果 ]';
+            content.appendChild(label);
+            content.appendChild(document.createTextNode('\n' + JSON.stringify(debug.parsed_action, null, 2)));
+        }
+
+        if (trace && trace.player.length) {
+            const label = document.createElement('span');
+            label.className = 'trace-section-label';
+            label.textContent = '\n[ 玩家行动 ]';
             content.appendChild(label);
             content.appendChild(document.createTextNode('\n' + trace.player.join('\n')));
         }
-        if (trace.enemy.length) {
+        if (trace && trace.enemy.length) {
             const label = document.createElement('span');
             label.className = 'trace-section-label';
             label.textContent = '\n[ 敌方行动 ]';
@@ -474,6 +888,20 @@ function updateModeBadge() {
         badge.textContent = 'AI';
         badge.className = 'mode-badge ai';
     }
+}
+
+async function toggleDebug() {
+    try {
+        const res = await fetch('/api/debug', { method: 'POST' });
+        const data = await res.json();
+        state.debugMode = data.debug;
+    } catch(e) {
+        state.debugMode = !state.debugMode;
+    }
+    const btn = $('btn-debug');
+    btn.textContent = state.debugMode ? 'DBG:ON' : 'DBG:OFF';
+    btn.style.borderColor = state.debugMode ? '#5aab8b' : '#555';
+    btn.style.color = state.debugMode ? '#5aab8b' : '#d8ccb4';
 }
 
 function scrollToBottom() {
